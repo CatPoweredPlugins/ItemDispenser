@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Authors>Ryzhehvost</Authors>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <TargetFrameworks>netcoreapp2.2;net48</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.2;net472</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

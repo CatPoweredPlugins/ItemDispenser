@@ -23,7 +23,7 @@ namespace ItemDispenser
 
 		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version;
 
-		public async Task<bool> OnBotTradeOfferAsync([NotNull] Bot bot, [NotNull] Steam.TradeOffer tradeOffer) {
+		public async Task<bool> OnBotTradeOffer([NotNull] Bot bot, [NotNull] Steam.TradeOffer tradeOffer) {
 			if (tradeOffer == null) {
 				ASF.ArchiLogger.LogNullError(nameof(tradeOffer));
 				return false;
