@@ -10,7 +10,7 @@ namespace ItemDispenser {
 		[JsonProperty(Required = Required.DisallowNull)]
 		public readonly uint AppID = 0;
 		[JsonProperty(Required = Required.DisallowNull)]
-		public readonly uint ContextID = 0;
+		public readonly ulong ContextID = 0;
 		[JsonProperty]
 		public readonly ImmutableHashSet<Steam.Asset.EType> Types = EmptyTypes;
 	}
