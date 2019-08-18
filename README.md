@@ -1,7 +1,7 @@
 # ASF Item Dispenser Plugin
 
 # Introduction
-This plugin allows you to set your bot(s) to accept incoming trade requests for certain type(s) of items from your inventory. It's primary use is giving away your coupons to people who need it. Initially I planned to make plugin for coupons only, but decided that a bit of flexibility won't hurt, so you could specify any inventory you want to give away. Also, if your bot has `AcceptDonations` set in `TradingPreferences`, trade offers are allowed, apart from items you give, to have **any** items you will receive as a donation.
+This plugin allows you to set your bot(s) to accept incoming trade requests for certain type(s) of items from your inventory. It's primary use is giving away your coupons to people who need it. Initially I planned to make plugin for coupons only, but decided that a bit of flexibility won't hurt, so you could specify any inventory you want to give away. Also, if your bot has `AcceptDonations` set in `TradingPreferences`, trade offers are allowed, apart from items you give, to have **any** items you will receive as a donation. It **will not**, however, accept "mixed" trade offers, i.e. trades where someone wants to both exchange with you some items on 1:1 basis and at the same time take some items you dispense.
 
 ## Installation
 - download .zip file from [latest release](https://github.com/Ryzhehvost/ItemDispenser/releases/latest), in most cases you need `ItemDispenser.zip`, but if you use ASF-generic-netf.zip (you really need a strong reason to do that) download `ItemDispenser-netf.zip`.
@@ -49,7 +49,7 @@ It's simple, as one-two-three:
 
 
 # Введение
-Этот плагин позволяет вам настроить бота так, чтобы он принимал входящие обмены с запросом вещей определённых типов из вашего инвентаря. Его основное назначение - раздача купонов нуждающимся в них людях. Изначально я планировал создать плагин исключительно для купонов, но решил что немного гибкости не повредит, поэтому вы можете его настроить на раздачу предметов из любого инвентаря стим. Также, если у вашего бота включено значение `AcceptDonations` в параметре `TradingPreferences`, в предложениях обмена, кроме вещей которые вы отдаёте, могут присутствовать также **любые** предметы которые вы получите в качестве пожертвований.
+Этот плагин позволяет вам настроить бота так, чтобы он принимал входящие обмены с запросом вещей определённых типов из вашего инвентаря. Его основное назначение - раздача купонов нуждающимся в них людях. Изначально я планировал создать плагин исключительно для купонов, но решил что немного гибкости не повредит, поэтому вы можете его настроить на раздачу предметов из любого инвентаря стим. Также, если у вашего бота включено значение `AcceptDonations` в параметре `TradingPreferences`, в предложениях обмена, кроме вещей которые вы отдаёте, могут присутствовать также **любые** предметы которые вы получите в качестве пожертвований. Однако он **не** примет "смешанные" предложения обмена, т.е. такие где с вами хотят обменяться предметами 1:1 и одновременно взять предметы которые вы раздаёте.
 
 ## Установка
 - скачайте файл .zip из [последнего релиза](https://github.com/Ryzhehvost/ItemDispenser/releases/latest), в большинстве случаев вам нужен файл `ItemDispenser.zip`, не если вы по какой-то причине пользуетесь ASF-generic-netf.zip (а для этого нужны веские причины) - скачайте `ItemDispenser-netf.zip`.
