@@ -7,10 +7,10 @@ namespace ItemDispenser {
 	public sealed class DispenseItem {
 		public static readonly ImmutableHashSet<Steam.Asset.EType> EmptyTypes = ImmutableHashSet<Steam.Asset.EType>.Empty;
 
-		[JsonProperty(Required = Required.DisallowNull)]
-		public readonly uint AppID = 0;
-		[JsonProperty(Required = Required.DisallowNull)]
-		public readonly ulong ContextID = 0;
+		[JsonProperty(Required = Required.Always)]
+		public readonly uint AppID;
+		[JsonProperty(Required = Required.Always)]
+		public readonly ulong ContextID;
 		[JsonProperty]
 		public readonly ImmutableHashSet<Steam.Asset.EType> Types = EmptyTypes;
 	}

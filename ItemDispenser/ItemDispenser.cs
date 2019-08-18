@@ -53,11 +53,11 @@ namespace ItemDispenser
 				return false;
 			}
 
-			foreach (Steam.Asset item in tradeOffer.ItemsToReceiveReadOnly) {
+			foreach (Steam.Asset item in tradeOffer.ItemsToGiveReadOnly) {
 				if (!ItemsToDispense.Any( sample => 
 										(sample.AppID == item.AppID) &&
 										(sample.ContextID == item.ContextID) && 
-									    ((sample.Types!=null) ? sample.Types.Any(type => type == item.Type) : true)
+									    ((sample.Types.Count > 0) ? sample.Types.Any(type => type == item.Type) : true)
 										)) {
 					return false;
 				}
@@ -72,18 +72,23 @@ namespace ItemDispenser
 		public void OnBotInitModules([NotNull] Bot bot, [CanBeNull] IReadOnlyDictionary<string, JToken> additionalConfigProperties = null) {
 
 			if (additionalConfigProperties == null) {
-				BotSettings.TryAdd(bot, new ConcurrentHashSet<DispenseItem>());
+				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 				return;
 			}
 
 			if (!additionalConfigProperties.TryGetValue("Ryzhehvost.DispenseItems", out JToken jToken)) {
-				BotSettings.TryAdd(bot, new ConcurrentHashSet<DispenseItem>());
+				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 				return;
 			}
 
 			ConcurrentHashSet <DispenseItem> dispenseItems;
-			dispenseItems = jToken.Value<JArray>().ToObject<ConcurrentHashSet<DispenseItem>>();
-			BotSettings.TryAdd(bot, dispenseItems);
+			try {
+				dispenseItems = jToken.Value<JArray>().ToObject<ConcurrentHashSet<DispenseItem>>();
+				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
+			} catch {
+				ASF.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
+				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
+			}
 			return;
 		}
 
