@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <Authors>Ryzhehvost</Authors>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <TargetFrameworks>netcoreapp2.2;net472</TargetFrameworks>
+    <AssemblyVersion>0.1.1.0</AssemblyVersion>
+    <TargetFrameworks>netcoreapp3.0;net48</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
