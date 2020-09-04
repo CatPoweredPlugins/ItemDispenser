@@ -21,7 +21,7 @@ namespace ItemDispenser
 
 		public string Name => nameof(ItemDispenser);
 
-		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version;
+		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0");
 
 		public async Task<bool> OnBotTradeOffer([NotNull] Bot bot, [NotNull] Steam.TradeOffer tradeOffer) {
 			if (tradeOffer == null) {
@@ -43,20 +43,20 @@ namespace ItemDispenser
 			// If user has a trade hold, we add extra logic
 			if (holdDuration.Value > 0) {
 				// If trade hold duration exceeds our max, or user asks for cards with short lifespan, reject the trade
-				if ((holdDuration.Value > ASF.GlobalConfig.MaxTradeHoldDuration) || tradeOffer.ItemsToGiveReadOnly.Any(item => ((item.Type == Steam.Asset.EType.FoilTradingCard) || (item.Type == Steam.Asset.EType.TradingCard)) && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))) {
+				if ((holdDuration.Value > (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) || tradeOffer.ItemsToGiveReadOnly.Any(item => ((item.Type == Steam.Asset.EType.FoilTradingCard) || (item.Type == Steam.Asset.EType.TradingCard)) && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))) {
 					return false;
 				}
 			}
 
 			//if we can't get settings for this bot for some reason - ignore
-			if (!BotSettings.TryGetValue(bot, out ConcurrentHashSet<DispenseItem> ItemsToDispense)) {
+			if (!BotSettings.TryGetValue(bot, out ConcurrentHashSet<DispenseItem>? ItemsToDispense)) {
 				return false;
 			}
 
 			foreach (Steam.Asset item in tradeOffer.ItemsToGiveReadOnly) {
-				if (!ItemsToDispense.Any( sample => 
+				if (!ItemsToDispense.Any( sample =>
 										(sample.AppID == item.AppID) &&
-										(sample.ContextID == item.ContextID) && 
+										(sample.ContextID == item.ContextID) &&
 									    ((sample.Types.Count > 0) ? sample.Types.Any(type => type == item.Type) : true)
 										)) {
 					return false;
@@ -69,24 +69,28 @@ namespace ItemDispenser
 		public void OnLoaded() => ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Ryzhehvost, powered by ginger cats");
 
 
-		public void OnBotInitModules([NotNull] Bot bot, [CanBeNull] IReadOnlyDictionary<string, JToken> additionalConfigProperties = null) {
+		public void OnBotInitModules([NotNull] Bot bot, [CanBeNull] IReadOnlyDictionary<string, JToken>? additionalConfigProperties) {
 
 			if (additionalConfigProperties == null) {
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 				return;
 			}
 
-			if (!additionalConfigProperties.TryGetValue("Ryzhehvost.DispenseItems", out JToken jToken)) {
+			if (!additionalConfigProperties.TryGetValue("Ryzhehvost.DispenseItems", out JToken? jToken)) {
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 				return;
 			}
 
-			ConcurrentHashSet <DispenseItem> dispenseItems;
+			ConcurrentHashSet <DispenseItem>? dispenseItems;
 			try {
 				dispenseItems = jToken.Value<JArray>().ToObject<ConcurrentHashSet<DispenseItem>>();
+				if (dispenseItems == null){
+					bot.ArchiLogger.LogNullError(nameof(dispenseItems));
+					return;
+				}
 				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
 			} catch {
-				ASF.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
+				bot.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 			}
 			return;
