@@ -43,6 +43,8 @@ It's simple, as one-two-three:
 3. Link will have three numbers after `#` character, separated with `_`. You need first two, those are AppID and ContextID respectively. Look at the following picture for better understanding:
 ![AppID and ContextID](https://i.imgur.com/hom2PZq.png)
 
+You can get support for this plugin in https://steamcommunity.com/groups/Ryzheplugins (or just use github issues).
+
 ---
 
 # Плагин ASF для раздачи предметов
@@ -90,5 +92,7 @@ It's simple, as one-two-three:
 2. Скопируйте ссылку на этот предмет в блокнот, **или**, если ваш браузер показывает ссылку, на которую вы наводите, просто посмотрите на неё.
 3. Ссылка будет иметь три числа после символа `#`, разделённые символом `_`. Вам нужны первые два, это и будут AppID и ContextID соответственно. Посмотрите на следующую картинку для лучшего понимания:
 ![AppID и ContextID](https://i.imgur.com/hom2PZq.png)
+
+Помощь по этому плагину вы можете получить в https://steamcommunity.com/groups/Ryzheplugins (или просто используйте раздел issues)
 
 ![downloads](https://img.shields.io/github/downloads/Ryzhehvost/ItemDispenser/total.svg?style=social)
