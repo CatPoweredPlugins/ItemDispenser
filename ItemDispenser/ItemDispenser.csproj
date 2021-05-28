@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Authors>Ryzhehvost</Authors>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
     <TargetFrameworks>net5.0;net48</TargetFrameworks>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -15,9 +15,5 @@
   <ItemGroup>
     <ProjectReference Include="..\ArchiSteamFarm\ArchiSteamFarm\ArchiSteamFarm.csproj" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mkdir $(TargetDir)ItemDispenser&#xD;&#xA;copy $(TargetPath) $(TargetDir)ItemDispenser\&#xD;&#xA;7z a -tzip -mx7  ItemDispenser.zip $(TargetDir)ItemDispenser" />
-  </Target>
 
 </Project>

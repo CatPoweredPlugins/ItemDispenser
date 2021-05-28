@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
-using ArchiSteamFarm;
+using ArchiSteamFarm.Steam;
+using ArchiSteamFarm.Steam.Cards;
+using ArchiSteamFarm.Steam.Data;
+using ArchiSteamFarm.Steam.Storage;
 using ArchiSteamFarm.Collections;
-using ArchiSteamFarm.Json;
-using ArchiSteamFarm.Plugins;
+using ArchiSteamFarm.Core;
+using ArchiSteamFarm.Plugins.Interfaces;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,7 +26,7 @@ namespace ItemDispenser
 
 		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0");
 
-		public async Task<bool> OnBotTradeOffer([NotNull] Bot bot, [NotNull] Steam.TradeOffer tradeOffer) {
+		public async Task<bool> OnBotTradeOffer([NotNull] Bot bot, [NotNull] TradeOffer tradeOffer) {
 			if (tradeOffer == null) {
 				ASF.ArchiLogger.LogNullError(nameof(tradeOffer));
 				return false;
@@ -43,7 +46,7 @@ namespace ItemDispenser
 			// If user has a trade hold, we add extra logic
 			if (holdDuration.Value > 0) {
 				// If trade hold duration exceeds our max, or user asks for cards with short lifespan, reject the trade
-				if ((holdDuration.Value > (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) || tradeOffer.ItemsToGiveReadOnly.Any(item => ((item.Type == Steam.Asset.EType.FoilTradingCard) || (item.Type == Steam.Asset.EType.TradingCard)) && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))) {
+				if ((holdDuration.Value > (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) || tradeOffer.ItemsToGiveReadOnly.Any(item => ((item.Type == Asset.EType.FoilTradingCard) || (item.Type == Asset.EType.TradingCard)) && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))) {
 					return false;
 				}
 			}
@@ -53,7 +56,7 @@ namespace ItemDispenser
 				return false;
 			}
 
-			foreach (Steam.Asset item in tradeOffer.ItemsToGiveReadOnly) {
+			foreach (Asset item in tradeOffer.ItemsToGiveReadOnly) {
 				if (!ItemsToDispense.Any( sample =>
 										(sample.AppID == item.AppID) &&
 										(sample.ContextID == item.ContextID) &&
@@ -83,7 +86,7 @@ namespace ItemDispenser
 
 			ConcurrentHashSet <DispenseItem>? dispenseItems;
 			try {
-				dispenseItems = jToken.Value<JArray>().ToObject<ConcurrentHashSet<DispenseItem>>();
+				dispenseItems = jToken.Value<JArray>()?.ToObject<ConcurrentHashSet<DispenseItem>>();
 				if (dispenseItems == null){
 					bot.ArchiLogger.LogNullError(nameof(dispenseItems));
 					return;
