@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Composition;
@@ -15,18 +15,17 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace ItemDispenser
-{
+namespace ItemDispenser {
 	[Export(typeof(IPlugin))]
 	public class ItemDispenser : IBotTradeOffer, IBotModules {
 
-		private readonly ConcurrentDictionary<Bot, ConcurrentHashSet<DispenseItem>> BotSettings = new ConcurrentDictionary<Bot, ConcurrentHashSet<DispenseItem>>();
+		private readonly ConcurrentDictionary<Bot, ConcurrentHashSet<DispenseItem>> BotSettings = new();
 
 		public string Name => nameof(ItemDispenser);
 
-		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0");
+		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0.0.0.0");
 
-		public async Task<bool> OnBotTradeOffer([NotNull] Bot bot, [NotNull] TradeOffer tradeOffer) {
+		public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer) {
 			if (tradeOffer == null) {
 				ASF.ArchiLogger.LogNullError(nameof(tradeOffer));
 				return false;
@@ -57,10 +56,10 @@ namespace ItemDispenser
 			}
 
 			foreach (Asset item in tradeOffer.ItemsToGiveReadOnly) {
-				if (!ItemsToDispense.Any( sample =>
-										(sample.AppID == item.AppID) &&
-										(sample.ContextID == item.ContextID) &&
-									    ((sample.Types.Count > 0) ? sample.Types.Any(type => type == item.Type) : true)
+				if (!ItemsToDispense.Any(sample =>
+									   (sample.AppID == item.AppID) &&
+									   (sample.ContextID == item.ContextID) &&
+									   (sample.Types.Count <= 0 || sample.Types.Any(type => type == item.Type))
 										)) {
 					return false;
 				}
@@ -69,34 +68,37 @@ namespace ItemDispenser
 			return true;
 		}
 
-		public void OnLoaded() => ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Ryzhehvost, powered by ginger cats");
+		public Task OnLoaded() {
+			ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Ryzhehvost, powered by ginger cats");
+			return Task.CompletedTask;
+		}
 
 
-		public void OnBotInitModules([NotNull] Bot bot, [CanBeNull] IReadOnlyDictionary<string, JToken>? additionalConfigProperties) {
+		public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JToken>? additionalConfigProperties) {
 
 			if (additionalConfigProperties == null) {
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
-				return;
+				return Task.CompletedTask;
 			}
 
 			if (!additionalConfigProperties.TryGetValue("Ryzhehvost.DispenseItems", out JToken? jToken)) {
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
-				return;
+				return Task.CompletedTask;
 			}
 
-			ConcurrentHashSet <DispenseItem>? dispenseItems;
+			ConcurrentHashSet<DispenseItem>? dispenseItems;
 			try {
 				dispenseItems = jToken.Value<JArray>()?.ToObject<ConcurrentHashSet<DispenseItem>>();
-				if (dispenseItems == null){
+				if (dispenseItems == null) {
 					bot.ArchiLogger.LogNullError(nameof(dispenseItems));
-					return;
+					return Task.CompletedTask;
 				}
 				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
 			} catch {
 				bot.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 			}
-			return;
+			return Task.CompletedTask;
 		}
 
 	}
