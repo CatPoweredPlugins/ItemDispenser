@@ -27,7 +27,7 @@ namespace ItemDispenser {
 
 		public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer) {
 			if (tradeOffer == null) {
-				ASF.ArchiLogger.LogNullError(nameof(tradeOffer));
+				ASF.ArchiLogger.LogNullError(tradeOffer);
 				return false;
 			}
 
@@ -90,7 +90,7 @@ namespace ItemDispenser {
 			try {
 				dispenseItems = jToken.Value<JArray>()?.ToObject<ConcurrentHashSet<DispenseItem>>();
 				if (dispenseItems == null) {
-					bot.ArchiLogger.LogNullError(nameof(dispenseItems));
+					bot.ArchiLogger.LogNullError(dispenseItems);
 					return Task.CompletedTask;
 				}
 				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
