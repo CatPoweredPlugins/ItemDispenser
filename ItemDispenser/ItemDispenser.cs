@@ -69,7 +69,7 @@ namespace ItemDispenser {
 		}
 
 		public Task OnLoaded() {
-			ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Ryzhehvost, powered by ginger cats");
+			ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Rudokhvist, powered by ginger cats");
 			return Task.CompletedTask;
 		}
 
@@ -81,7 +81,7 @@ namespace ItemDispenser {
 				return Task.CompletedTask;
 			}
 
-			if (!additionalConfigProperties.TryGetValue("Ryzhehvost.DispenseItems", out JToken? jToken)) {
+			if (!additionalConfigProperties.TryGetValue("Rudokhvist.DispenseItems", out JToken? jToken)) {
 				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
 				return Task.CompletedTask;
 			}
