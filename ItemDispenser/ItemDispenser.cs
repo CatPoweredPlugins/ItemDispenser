@@ -12,8 +12,8 @@ using ArchiSteamFarm.Collections;
 using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Plugins.Interfaces;
 using JetBrains.Annotations;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using ArchiSteamFarm.Helpers.Json;
 
 namespace ItemDispenser {
 	[Export(typeof(IPlugin))]
@@ -74,29 +74,25 @@ namespace ItemDispenser {
 		}
 
 
-		public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JToken>? additionalConfigProperties) {
+		public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
 
 			if (additionalConfigProperties == null) {
-				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
+				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
 				return Task.CompletedTask;
 			}
 
-			if (!additionalConfigProperties.TryGetValue("Rudokhvist.DispenseItems", out JToken? jToken)) {
-				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
+			if (!additionalConfigProperties.TryGetValue("Rudokhvist.DispenseItems", out JsonElement jToken)) {
+				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
 				return Task.CompletedTask;
 			}
 
-			ConcurrentHashSet<DispenseItem>? dispenseItems;
+			ConcurrentHashSet<DispenseItem> dispenseItems = [];
 			try {
-				dispenseItems = jToken.Value<JArray>()?.ToObject<ConcurrentHashSet<DispenseItem>>();
-				if (dispenseItems == null) {
-					bot.ArchiLogger.LogNullError(dispenseItems);
-					return Task.CompletedTask;
-				}
+				dispenseItems.UnionWith(jToken.EnumerateArray().Select(static elem => elem.ToJsonObject<DispenseItem?>()).OfType<DispenseItem>());
 				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
 			} catch {
 				bot.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
-				BotSettings.AddOrUpdate(bot, new ConcurrentHashSet<DispenseItem>(), (k, v) => new ConcurrentHashSet<DispenseItem>());
+				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
 			}
 			return Task.CompletedTask;
 		}

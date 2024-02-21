@@ -1,17 +1,18 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using ArchiSteamFarm.Steam.Data;
-using Newtonsoft.Json;
 
 namespace ItemDispenser {
 
 	public sealed class DispenseItem {
-		public static readonly ImmutableHashSet<Asset.EType> EmptyTypes = ImmutableHashSet<Asset.EType>.Empty;
-
-		[JsonProperty(Required = Required.Always)]
+		public static readonly ImmutableHashSet<Asset.EType> EmptyTypes = [];
+		[JsonInclude]
+		[JsonRequired]
 		public readonly uint AppID;
-		[JsonProperty(Required = Required.Always)]
+		[JsonInclude]
+		[JsonRequired]
 		public readonly ulong ContextID;
-		[JsonProperty]
+		[JsonInclude]
 		public readonly ImmutableHashSet<Asset.EType> Types = EmptyTypes;
 	}
 }
