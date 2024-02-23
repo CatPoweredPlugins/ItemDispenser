@@ -8,11 +8,12 @@ namespace ItemDispenser {
 		public static readonly ImmutableHashSet<Asset.EType> EmptyTypes = [];
 		[JsonInclude]
 		[JsonRequired]
-		public readonly uint AppID;
+		public uint AppID { get; private init; }
 		[JsonInclude]
 		[JsonRequired]
-		public readonly ulong ContextID;
+		public ulong ContextID { get; private init; }
+
 		[JsonInclude]
-		public readonly ImmutableHashSet<Asset.EType> Types = EmptyTypes;
-	}
+		public ImmutableHashSet<Asset.EType> Types { get; private init; } = EmptyTypes;
+}
 }
