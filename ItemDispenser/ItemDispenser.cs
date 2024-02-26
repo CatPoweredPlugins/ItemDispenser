@@ -41,7 +41,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 			return Task.CompletedTask;
 		}
 
-		Dictionary<(uint AppID, ulong ContextID), HashSet<Asset.EType>> botSettings = new();
+		Dictionary<(uint AppID, ulong ContextID), HashSet<Asset.EType>> botSettings = [];
 
 		try {
 			foreach (DispenseItem? dispenseItem in jsonElement.EnumerateArray().Select(static elem => elem.ToJsonObject<DispenseItem>())) {
@@ -52,7 +52,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 				(uint AppID, ulong ContextID) key = (dispenseItem.AppID, dispenseItem.ContextID);
 
 				if (!botSettings.TryGetValue(key, out HashSet<Asset.EType>? types)) {
-					types = new HashSet<Asset.EType>();
+					types = [];
 					botSettings[key] = types;
 				}
 
