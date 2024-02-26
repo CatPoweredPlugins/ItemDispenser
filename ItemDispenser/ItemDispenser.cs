@@ -1,101 +1,97 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using ArchiSteamFarm.Core;
+using ArchiSteamFarm.Helpers.Json;
+using ArchiSteamFarm.Plugins.Interfaces;
 using ArchiSteamFarm.Steam;
 using ArchiSteamFarm.Steam.Cards;
 using ArchiSteamFarm.Steam.Data;
 using ArchiSteamFarm.Steam.Storage;
-using ArchiSteamFarm.Collections;
-using ArchiSteamFarm.Core;
-using ArchiSteamFarm.Plugins.Interfaces;
-using JetBrains.Annotations;
-using System.Text.Json;
-using ArchiSteamFarm.Helpers.Json;
 
-namespace ItemDispenser {
-	[Export(typeof(IPlugin))]
-	public class ItemDispenser : IBotTradeOffer, IBotModules {
+namespace ItemDispenser;
 
-		private readonly ConcurrentDictionary<Bot, ConcurrentHashSet<DispenseItem>> BotSettings = new();
+[Export(typeof(IPlugin))]
 
-		public string Name => nameof(ItemDispenser);
+internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
+	private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<Asset.EType>>> BotSettings = new();
 
-		public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0.0.0.0");
+	public string Name => nameof(ItemDispenser);
 
-		public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer) {
-			if (tradeOffer == null) {
-				ASF.ArchiLogger.LogNullError(tradeOffer);
-				return false;
-			}
+	public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0.0.0.0");
 
-			//If we receiveing something in return, and donations is not accepted - ignore.
-			if (tradeOffer.ItemsToReceiveReadOnly.Count > 0 && !bot.BotConfig.TradingPreferences.HasFlag(BotConfig.ETradingPreferences.AcceptDonations)) {
-				return false;
-			}
-			byte? holdDuration = await bot.GetTradeHoldDuration(tradeOffer.OtherSteamID64, tradeOffer.TradeOfferID).ConfigureAwait(false);
+	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
+		ArgumentNullException.ThrowIfNull(bot);
 
-			if (!holdDuration.HasValue) {
-				// If we can't get trade hold duration, ignore
-				return false;
-			}
+		if (additionalConfigProperties == null) {
+			_ = BotSettings.TryRemove(bot, out _);
 
-			// If user has a trade hold, we add extra logic
-			if (holdDuration.Value > 0) {
-				// If trade hold duration exceeds our max, or user asks for cards with short lifespan, reject the trade
-				if ((holdDuration.Value > (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) || tradeOffer.ItemsToGiveReadOnly.Any(item => ((item.Type == Asset.EType.FoilTradingCard) || (item.Type == Asset.EType.TradingCard)) && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))) {
-					return false;
-				}
-			}
-
-			//if we can't get settings for this bot for some reason - ignore
-			if (!BotSettings.TryGetValue(bot, out ConcurrentHashSet<DispenseItem>? ItemsToDispense)) {
-				return false;
-			}
-
-			foreach (Asset item in tradeOffer.ItemsToGiveReadOnly) {
-				if (!ItemsToDispense.Any(sample =>
-									   (sample.AppID == item.AppID) &&
-									   (sample.ContextID == item.ContextID) &&
-									   (sample.Types.Count <= 0 || sample.Types.Any(type => type == item.Type))
-										)) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		public Task OnLoaded() {
-			ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Rudokhvist, powered by ginger cats");
 			return Task.CompletedTask;
 		}
 
+		if (!additionalConfigProperties.TryGetValue("Rudokhvist.DispenseItems", out JsonElement jsonElement)) {
+			_ = BotSettings.TryRemove(bot, out _);
 
-		public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
-
-			if (additionalConfigProperties == null) {
-				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
-				return Task.CompletedTask;
-			}
-
-			if (!additionalConfigProperties.TryGetValue("Rudokhvist.DispenseItems", out JsonElement jToken)) {
-				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
-				return Task.CompletedTask;
-			}
-
-			ConcurrentHashSet<DispenseItem> dispenseItems = [];
-			try {
-				dispenseItems.UnionWith(jToken.EnumerateArray().Select(static elem => elem.ToJsonObject<DispenseItem?>()).OfType<DispenseItem>());
-				BotSettings.AddOrUpdate(bot, dispenseItems, (k, v) => dispenseItems);
-			} catch {
-				bot.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
-				BotSettings.AddOrUpdate(bot, [], (k, v) => []);
-			}
 			return Task.CompletedTask;
 		}
 
+		Dictionary<(uint AppID, ulong ContextID), HashSet<Asset.EType>> botSettings = [];
+
+		try {
+			foreach (DispenseItem? dispenseItem in jsonElement.EnumerateArray().Select(static elem => elem.ToJsonObject<DispenseItem>())) {
+				if (dispenseItem == null) {
+					continue;
+				}
+
+				(uint AppID, ulong ContextID) key = (dispenseItem.AppID, dispenseItem.ContextID);
+
+				if (!botSettings.TryGetValue(key, out HashSet<Asset.EType>? types)) {
+					types = [];
+					botSettings[key] = types;
+				}
+
+				types.UnionWith(dispenseItem.Types);
+			}
+
+			BotSettings[bot] = botSettings.ToFrozenDictionary(static kv => kv.Key, static kv => kv.Value.ToFrozenSet());
+		} catch (Exception e) {
+			bot.ArchiLogger.LogGenericException(e);
+			bot.ArchiLogger.LogGenericError("Item Dispenser configuration is wrong!");
+
+			_ = BotSettings.TryRemove(bot, out _);
+		}
+
+		return Task.CompletedTask;
+	}
+
+	public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer) {
+		ArgumentNullException.ThrowIfNull(bot);
+		ArgumentNullException.ThrowIfNull(tradeOffer);
+
+		if (!BotSettings.TryGetValue(bot, out FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<Asset.EType>>? itemsToDispense)) {
+			// Settings not declared for this bot, skip overhead
+			return false;
+		}
+
+		// If we're receiving something in return, and donations is not accepted - ignore
+		if ((tradeOffer.ItemsToReceiveReadOnly.Count > 0) && !bot.BotConfig.TradingPreferences.HasFlag(BotConfig.ETradingPreferences.AcceptDonations)) {
+			return false;
+		}
+
+		byte? holdDuration = await bot.GetTradeHoldDuration(tradeOffer.OtherSteamID64, tradeOffer.TradeOfferID).ConfigureAwait(false);
+
+		return holdDuration != null && (!(holdDuration > 0) || holdDuration.Value <= (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) && !tradeOffer.ItemsToGiveReadOnly.Any(static item => item.Type is Asset.EType.FoilTradingCard or Asset.EType.TradingCard && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))
+&& tradeOffer.ItemsToGiveReadOnly.All(item => itemsToDispense.TryGetValue((item.AppID, item.ContextID), out FrozenSet<Asset.EType>? dispense) && ((dispense.Count == 0) || dispense.Contains(item.Type)));
+	}
+
+	public Task OnLoaded() {
+		ASF.ArchiLogger.LogGenericInfo("Item Dispenser Plugin by Rudokhvist, powered by ginger cats");
+
+		return Task.CompletedTask;
 	}
 }
