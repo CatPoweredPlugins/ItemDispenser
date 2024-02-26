@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Composition;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,12 +18,15 @@ using ArchiSteamFarm.Steam.Storage;
 namespace ItemDispenser;
 
 [Export(typeof(IPlugin))]
+[SuppressMessage("ReSharper", "UnusedType.Global")]
 internal sealed class ItemDispenser : IBotTradeOffer, IBotModules
 {
     private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<Asset.EType>>> BotSettings = new();
 
     public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties)
     {
+        ArgumentNullException.ThrowIfNull(bot);
+        
         if (additionalConfigProperties == null)
         {
             BotSettings.TryRemove(bot, out _);
