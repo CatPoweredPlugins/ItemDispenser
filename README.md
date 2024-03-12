@@ -41,6 +41,6 @@ It's simple, as one-two-three:
 1. Open inventory that you plan to give away in browser, and select any item.
 2. Copy the link to that item and copy it to notepad, **or**, if your browser shows you the link you're hovering, just look at it.
 3. Link will have three numbers after `#` character, separated with `_`. You need first two, those are AppID and ContextID respectively. Look at the following picture for better understanding:
-![AppID and ContextID](https://i.imgur.com/hom2PZq.png)
+![AppID and ContextID](https://i.imgur.com/85yUCAX.png)
 
 ![downloads](https://img.shields.io/github/downloads/Rudokhvist/ItemDispenser/total.svg?style=social)
