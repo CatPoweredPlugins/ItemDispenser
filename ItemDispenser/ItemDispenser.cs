@@ -19,7 +19,7 @@ namespace ItemDispenser;
 [Export(typeof(IPlugin))]
 
 internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
-	private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<Asset.EType>>> BotSettings = new();
+	private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<EAssetType>>> BotSettings = new();
 
 	public string Name => nameof(ItemDispenser);
 
@@ -40,7 +40,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 			return Task.CompletedTask;
 		}
 
-		Dictionary<(uint AppID, ulong ContextID), HashSet<Asset.EType>> botSettings = [];
+		Dictionary<(uint AppID, ulong ContextID), HashSet<EAssetType>> botSettings = [];
 
 		try {
 			foreach (DispenseItem? dispenseItem in jsonElement.EnumerateArray().Select(static elem => elem.ToJsonObject<DispenseItem>())) {
@@ -50,7 +50,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 
 				(uint AppID, ulong ContextID) key = (dispenseItem.AppID, dispenseItem.ContextID);
 
-				if (!botSettings.TryGetValue(key, out HashSet<Asset.EType>? types)) {
+				if (!botSettings.TryGetValue(key, out HashSet<EAssetType>? types)) {
 					types = [];
 					botSettings[key] = types;
 				}
@@ -73,7 +73,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 		ArgumentNullException.ThrowIfNull(bot);
 		ArgumentNullException.ThrowIfNull(tradeOffer);
 
-		if (!BotSettings.TryGetValue(bot, out FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<Asset.EType>>? itemsToDispense)) {
+		if (!BotSettings.TryGetValue(bot, out FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<EAssetType>>? itemsToDispense)) {
 			// Settings not declared for this bot, skip overhead
 			return false;
 		}
@@ -85,8 +85,8 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 
 		byte? holdDuration = await bot.GetTradeHoldDuration(tradeOffer.OtherSteamID64, tradeOffer.TradeOfferID).ConfigureAwait(false);
 
-		return holdDuration != null && (!(holdDuration > 0) || holdDuration.Value <= (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) && !tradeOffer.ItemsToGiveReadOnly.Any(static item => item.Type is Asset.EType.FoilTradingCard or Asset.EType.TradingCard && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))
-&& tradeOffer.ItemsToGiveReadOnly.All(item => itemsToDispense.TryGetValue((item.AppID, item.ContextID), out FrozenSet<Asset.EType>? dispense) && ((dispense.Count == 0) || dispense.Contains(item.Type)));
+		return holdDuration != null && (!(holdDuration > 0) || holdDuration.Value <= (ASF.GlobalConfig?.MaxTradeHoldDuration ?? 0)) && !tradeOffer.ItemsToGiveReadOnly.Any(static item => item.Type is EAssetType.FoilTradingCard or EAssetType.TradingCard && CardsFarmer.SalesBlacklist.Contains(item.RealAppID))
+&& tradeOffer.ItemsToGiveReadOnly.All(item => itemsToDispense.TryGetValue((item.AppID, item.ContextID), out FrozenSet<EAssetType>? dispense) && ((dispense.Count == 0) || dispense.Contains(item.Type)));
 	}
 
 	public Task OnLoaded() {

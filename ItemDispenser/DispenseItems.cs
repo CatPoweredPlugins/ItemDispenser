@@ -5,7 +5,7 @@ using ArchiSteamFarm.Steam.Data;
 namespace ItemDispenser {
 
 	public sealed class DispenseItem {
-		public static readonly ImmutableHashSet<Asset.EType> EmptyTypes = [];
+		public static readonly ImmutableHashSet<EAssetType> EmptyTypes = [];
 		[JsonInclude]
 		[JsonRequired]
 		public uint AppID { get; private init; }
@@ -14,6 +14,6 @@ namespace ItemDispenser {
 		public ulong ContextID { get; private init; }
 
 		[JsonInclude]
-		public ImmutableHashSet<Asset.EType> Types { get; private init; } = EmptyTypes;
+		public ImmutableHashSet<EAssetType> Types { get; private init; } = EmptyTypes;
 }
 }
