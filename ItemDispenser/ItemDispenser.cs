@@ -12,13 +12,14 @@ using ArchiSteamFarm.Plugins.Interfaces;
 using ArchiSteamFarm.Steam;
 using ArchiSteamFarm.Steam.Cards;
 using ArchiSteamFarm.Steam.Data;
+using ArchiSteamFarm.Steam.Exchange;
 using ArchiSteamFarm.Steam.Storage;
 
 namespace ItemDispenser;
 
 [Export(typeof(IPlugin))]
 
-internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
+internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules {
 	private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<EAssetType>>> BotSettings = new();
 
 	public string Name => nameof(ItemDispenser);
@@ -69,7 +70,7 @@ internal sealed class ItemDispenser : IBotTradeOffer, IBotModules {
 		return Task.CompletedTask;
 	}
 
-	public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer) {
+	public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfresult) {
 		ArgumentNullException.ThrowIfNull(bot);
 		ArgumentNullException.ThrowIfNull(tradeOffer);
 

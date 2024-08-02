@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Authors>Rudokhvist</Authors>
-    <AssemblyVersion>2.0.0.1</AssemblyVersion>
+    <AssemblyVersion>2.0.1.0</AssemblyVersion>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
