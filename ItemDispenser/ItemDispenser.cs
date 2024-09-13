@@ -2,8 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Composition;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ArchiSteamFarm.Core;
@@ -14,17 +16,42 @@ using ArchiSteamFarm.Steam.Cards;
 using ArchiSteamFarm.Steam.Data;
 using ArchiSteamFarm.Steam.Exchange;
 using ArchiSteamFarm.Steam.Storage;
+using ArchiSteamFarm.Web.GitHub.Data;
 
 namespace ItemDispenser;
 
 [Export(typeof(IPlugin))]
 
-internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules {
+internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules, IGitHubPluginUpdates {
 	private static readonly ConcurrentDictionary<Bot, FrozenDictionary<(uint AppID, ulong ContextID), FrozenSet<EAssetType>>> BotSettings = new();
 
 	public string Name => nameof(ItemDispenser);
 
 	public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0.0.0.0");
+
+	public string RepositoryName => "Rudokhvist/ItemDispenser";
+
+	public Task<ReleaseAsset?> GetTargetReleaseAsset(Version asfVersion, string asfVariant, Version newPluginVersion, IReadOnlyCollection<ReleaseAsset> releaseAssets) {
+		ArgumentNullException.ThrowIfNull(asfVersion);
+		ArgumentException.ThrowIfNullOrEmpty(asfVariant);
+		ArgumentNullException.ThrowIfNull(newPluginVersion);
+
+		if ((releaseAssets == null) || (releaseAssets.Count == 0)) {
+			throw new ArgumentNullException(nameof(releaseAssets));
+		}
+
+		Collection<ReleaseAsset?> matches = [.. releaseAssets.Where(r => r.Name.Equals(Name + ".zip", StringComparison.OrdinalIgnoreCase))];
+
+		if (matches.Count != 1) {
+			return Task.FromResult((ReleaseAsset?) null);
+		}
+
+		ReleaseAsset? release = matches[0];
+
+		return (Version.Major == newPluginVersion.Major && Version.Minor == newPluginVersion.Minor && Version.Build == newPluginVersion.Build) || asfVersion != Assembly.GetExecutingAssembly().GetName().Version
+			? Task.FromResult(release)
+			: Task.FromResult((ReleaseAsset?) null);
+	}
 
 	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
 		ArgumentNullException.ThrowIfNull(bot);
@@ -79,7 +106,7 @@ internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules {
 			return false;
 		}
 
-		// If we're receiving something in return, and donations is not accepted - ignore
+		// If we're receiving something in return, and donations are not accepted - ignore
 		if ((tradeOffer.ItemsToReceiveReadOnly.Count > 0) && !bot.BotConfig.TradingPreferences.HasFlag(BotConfig.ETradingPreferences.AcceptDonations)) {
 			return false;
 		}
