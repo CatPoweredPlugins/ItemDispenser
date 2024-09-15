@@ -4,12 +4,17 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Composition;
+using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ArchiSteamFarm;
+using ArchiSteamFarm.Localization;
 using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Helpers.Json;
+using ArchiSteamFarm.IPC.Controllers.Api;
 using ArchiSteamFarm.Plugins.Interfaces;
 using ArchiSteamFarm.Steam;
 using ArchiSteamFarm.Steam.Cards;
@@ -17,6 +22,7 @@ using ArchiSteamFarm.Steam.Data;
 using ArchiSteamFarm.Steam.Exchange;
 using ArchiSteamFarm.Steam.Storage;
 using ArchiSteamFarm.Web.GitHub.Data;
+using ArchiSteamFarm.Web.GitHub;
 
 namespace ItemDispenser;
 
@@ -31,27 +37,87 @@ internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules, IGitHubPlugi
 
 	public string RepositoryName => "Rudokhvist/ItemDispenser";
 
-	public Task<ReleaseAsset?> GetTargetReleaseAsset(Version asfVersion, string asfVariant, Version newPluginVersion, IReadOnlyCollection<ReleaseAsset> releaseAssets) {
+	public async Task<Uri?> GetTargetReleaseURL(Version asfVersion, string asfVariant, bool asfUpdate, bool stable, bool forced) {
 		ArgumentNullException.ThrowIfNull(asfVersion);
 		ArgumentException.ThrowIfNullOrEmpty(asfVariant);
-		ArgumentNullException.ThrowIfNull(newPluginVersion);
 
-		if ((releaseAssets == null) || (releaseAssets.Count == 0)) {
-			throw new ArgumentNullException(nameof(releaseAssets));
+		if (string.IsNullOrEmpty(RepositoryName)) {
+			ASF.ArchiLogger.LogGenericError(string.Format(CultureInfo.CurrentCulture, Strings.WarningFailedWithError, (nameof(RepositoryName))));
+
+			return null;
 		}
 
-		Collection<ReleaseAsset?> matches = [.. releaseAssets.Where(r => r.Name.Equals(Name + ".zip", StringComparison.OrdinalIgnoreCase))];
+		ReleaseResponse? releaseResponse = await GitHubService.GetLatestRelease(RepositoryName, stable).ConfigureAwait(false);
 
-		if (matches.Count != 1) {
-			return Task.FromResult((ReleaseAsset?) null);
+		if (releaseResponse == null) {
+			return null;
 		}
 
-		ReleaseAsset? release = matches[0];
+		Version newVersion = new(releaseResponse.Tag);
 
-		return (Version.Major == newPluginVersion.Major && Version.Minor == newPluginVersion.Minor && Version.Build == newPluginVersion.Build) || asfVersion != Assembly.GetExecutingAssembly().GetName().Version
-			? Task.FromResult(release)
-			: Task.FromResult((ReleaseAsset?) null);
+		if (!(Version.Major == newVersion.Major && Version.Minor == newVersion.Minor && Version.Build == newVersion.Build) && !(asfUpdate || forced)) {
+			ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "New {0} plugin version {1} is only compatible with latest ASF version", Name, newVersion));
+			return null;
+		}
+
+
+		if (Version >= newVersion & !forced) {
+			ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNotFound, Name, Version, newVersion));
+
+			return null;
+		}
+
+		if (releaseResponse.Assets.Count == 0) {
+			ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
+
+			return null;
+		}
+
+		ReleaseAsset? asset = await ((IGitHubPluginUpdates) this).GetTargetReleaseAsset(asfVersion, asfVariant, newVersion, releaseResponse.Assets).ConfigureAwait(false);
+
+		if ((asset == null) || !releaseResponse.Assets.Contains(asset)) {
+			ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
+
+			return null;
+		}
+
+		ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateFound, Name, Version, newVersion));
+
+		return asset.DownloadURL;
 	}
+
+	//public Task<ReleaseAsset?> GetTargetReleaseAsset(Version asfVersion, string asfVariant, Version newPluginVersion, IReadOnlyCollection<ReleaseAsset> releaseAssets) {
+	//	ArgumentNullException.ThrowIfNull(asfVersion);
+	//	ArgumentException.ThrowIfNullOrEmpty(asfVariant);
+	//	ArgumentNullException.ThrowIfNull(newPluginVersion);
+
+	//	if ((releaseAssets == null) || (releaseAssets.Count == 0)) {
+	//		throw new ArgumentNullException(nameof(releaseAssets));
+	//	}
+
+	//	Collection<ReleaseAsset?> matches = [.. releaseAssets.Where(r => r.Name.Equals(Name + ".zip", StringComparison.OrdinalIgnoreCase))];
+
+	//	if (matches.Count != 1) {
+	//		return Task.FromResult((ReleaseAsset?) null);
+	//	}
+
+	//	ReleaseAsset? release = matches[0];
+	//	Version? currentASFVersion = Assembly.GetEntryAssembly()?.GetName().Version;
+
+	//	ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "Versions: {0}, {1}, {2}, {3}", JsonSerializer.Serialize(Version), JsonSerializer.Serialize(newPluginVersion), JsonSerializer.Serialize(asfVersion), JsonSerializer.Serialize(currentASFVersion)));
+
+	//	if (currentASFVersion == null) {
+	//		ASF.ArchiLogger.LogGenericWarning("Unable to check ASF version");
+	//		return Task.FromResult((ReleaseAsset?) null);
+	//	}
+
+	//	if ((Version.Major == newPluginVersion.Major && Version.Minor == newPluginVersion.Minor && Version.Build == newPluginVersion.Build) || asfVersion != currentASFVersion) {
+	//		return Task.FromResult(release);
+	//	} else {
+	//		ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "New plugin version {0} is only compatible with latest ASF version", newPluginVersion));
+	//		return Task.FromResult((ReleaseAsset?) null);
+	//	}
+	//}
 
 	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
 		ArgumentNullException.ThrowIfNull(bot);
