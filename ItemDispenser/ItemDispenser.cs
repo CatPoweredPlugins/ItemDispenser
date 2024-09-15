@@ -86,39 +86,6 @@ internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules, IGitHubPlugi
 		return asset.DownloadURL;
 	}
 
-	//public Task<ReleaseAsset?> GetTargetReleaseAsset(Version asfVersion, string asfVariant, Version newPluginVersion, IReadOnlyCollection<ReleaseAsset> releaseAssets) {
-	//	ArgumentNullException.ThrowIfNull(asfVersion);
-	//	ArgumentException.ThrowIfNullOrEmpty(asfVariant);
-	//	ArgumentNullException.ThrowIfNull(newPluginVersion);
-
-	//	if ((releaseAssets == null) || (releaseAssets.Count == 0)) {
-	//		throw new ArgumentNullException(nameof(releaseAssets));
-	//	}
-
-	//	Collection<ReleaseAsset?> matches = [.. releaseAssets.Where(r => r.Name.Equals(Name + ".zip", StringComparison.OrdinalIgnoreCase))];
-
-	//	if (matches.Count != 1) {
-	//		return Task.FromResult((ReleaseAsset?) null);
-	//	}
-
-	//	ReleaseAsset? release = matches[0];
-	//	Version? currentASFVersion = Assembly.GetEntryAssembly()?.GetName().Version;
-
-	//	ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "Versions: {0}, {1}, {2}, {3}", JsonSerializer.Serialize(Version), JsonSerializer.Serialize(newPluginVersion), JsonSerializer.Serialize(asfVersion), JsonSerializer.Serialize(currentASFVersion)));
-
-	//	if (currentASFVersion == null) {
-	//		ASF.ArchiLogger.LogGenericWarning("Unable to check ASF version");
-	//		return Task.FromResult((ReleaseAsset?) null);
-	//	}
-
-	//	if ((Version.Major == newPluginVersion.Major && Version.Minor == newPluginVersion.Minor && Version.Build == newPluginVersion.Build) || asfVersion != currentASFVersion) {
-	//		return Task.FromResult(release);
-	//	} else {
-	//		ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "New plugin version {0} is only compatible with latest ASF version", newPluginVersion));
-	//		return Task.FromResult((ReleaseAsset?) null);
-	//	}
-	//}
-
 	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties) {
 		ArgumentNullException.ThrowIfNull(bot);
 
