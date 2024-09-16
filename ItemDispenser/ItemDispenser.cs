@@ -35,7 +35,7 @@ internal sealed class ItemDispenser : IBotTradeOffer2, IBotModules, IGitHubPlugi
 
 	public Version Version => typeof(ItemDispenser).Assembly.GetName().Version ?? new Version("0.0.0.0");
 
-	public string RepositoryName => "Rudokhvist/ItemDispenser";
+	public string RepositoryName => "CatPoweredPlugins/ItemDispenser";
 
 	public async Task<Uri?> GetTargetReleaseURL(Version asfVersion, string asfVariant, bool asfUpdate, bool stable, bool forced) {
 		ArgumentNullException.ThrowIfNull(asfVersion);
