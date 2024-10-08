@@ -4,7 +4,7 @@
 This plugin allows you to set your bot(s) to accept incoming trade requests for certain type(s) of items from your inventory. It's primary use is giving away your coupons to people who need it. Initially I planned to make plugin for coupons only, but decided that a bit of flexibility won't hurt, so you could specify any inventory you want to give away. Also, if your bot has `AcceptDonations` set in `TradingPreferences`, trade offers are allowed, apart from items you give, to have **any** items you will receive as a donation. It **will not**, however, accept "mixed" trade offers, i.e. trades where someone wants to both exchange with you some items on 1:1 basis and at the same time take some items you dispense.
 
 ## Installation
-- download `ItemDispenser.zip` file from [latest release](https://github.com/Rudokhvist/ItemDispenser/releases/latest).
+- download `ItemDispenser.zip` file from [latest release](https://github.com/CatPoweredPlugins/ItemDispenser/releases/latest).
 - unpack downloaded .zip file to `plugins` folder inside your ASF folder.
 - (re)start ASF, you should get a message indicating that plugin loaded successfully. 
 
@@ -43,4 +43,4 @@ It's simple, as one-two-three:
 3. Link will have three numbers after `#` character, separated with `_`. You need first two, those are AppID and ContextID respectively. Look at the following picture for better understanding:
 ![AppID and ContextID](https://i.imgur.com/85yUCAX.png)
 
-![downloads](https://img.shields.io/github/downloads/Rudokhvist/ItemDispenser/total.svg?style=social)
+![downloads](https://img.shields.io/github/downloads/CatPoweredPlugins/ItemDispenser/total.svg?style=social)
